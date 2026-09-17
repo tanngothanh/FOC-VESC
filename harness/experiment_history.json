@@ -144,5 +144,143 @@
     "all_passed": true,
     "summary": "LEVEL 1 CERTIFIED",
     "recommendations": []
+  },
+  {
+    "id": "EXP-1789633605",
+    "timestamp": "2026-09-17T15:26:45+0700",
+    "motor_name": "Sunnysky V4006 740KV",
+    "profile_name": "sunnysky_v4006_740kv_flight_35a_maxload",
+    "hardware_target": "High-Fidelity Mock Simulator",
+    "max_tracking_error_pct": 0.0,
+    "breakaway_current_a": 0.57,
+    "max_duty_achieved": 0.396,
+    "all_passed": true,
+    "summary": "LEVEL 1 CERTIFIED",
+    "recommendations": []
+  },
+  {
+    "id": "EXP-1789633605",
+    "timestamp": "2026-09-17T15:26:45+0700",
+    "motor_name": "Sunnysky V4006 740KV",
+    "profile_name": "sunnysky_v4006_740kv_flight_35a_maxload",
+    "hardware_target": "High-Fidelity Mock Simulator",
+    "max_tracking_error_pct": 0.0,
+    "breakaway_current_a": 0.57,
+    "max_duty_achieved": 0.396,
+    "all_passed": true,
+    "summary": "LEVEL 1 CERTIFIED",
+    "recommendations": []
+  },
+  {
+    "id": "EXP-1789633620",
+    "timestamp": "2026-09-17T15:27:00+0700",
+    "motor_name": "Sunnysky V4006 740KV",
+    "profile_name": "sunnysky_v4006_740kv_flight_35a_maxload",
+    "hardware_target": "High-Fidelity Mock Simulator",
+    "max_tracking_error_pct": 0.0,
+    "breakaway_current_a": 0.57,
+    "max_duty_achieved": 0.396,
+    "all_passed": true,
+    "summary": "LEVEL 1 CERTIFIED",
+    "recommendations": []
+  },
+  {
+    "id": "EXP-1789633620",
+    "timestamp": "2026-09-17T15:27:00+0700",
+    "motor_name": "Sunnysky V4006 740KV",
+    "profile_name": "sunnysky_v4006_740kv_flight_35a_maxload",
+    "hardware_target": "High-Fidelity Mock Simulator",
+    "max_tracking_error_pct": 0.0,
+    "breakaway_current_a": 0.57,
+    "max_duty_achieved": 0.396,
+    "all_passed": true,
+    "summary": "LEVEL 1 CERTIFIED",
+    "recommendations": []
+  },
+  {
+    "id": "EXP-1789633644",
+    "timestamp": "2026-09-17T15:27:24+0700",
+    "motor_name": "Sunnysky V4006 740KV",
+    "profile_name": "sunnysky_v4006_740kv_flight_35a_maxload",
+    "hardware_target": "High-Fidelity Mock Simulator",
+    "max_tracking_error_pct": 0.0,
+    "breakaway_current_a": 0.57,
+    "max_duty_achieved": 0.396,
+    "all_passed": true,
+    "summary": "LEVEL 1 CERTIFIED",
+    "recommendations": []
+  },
+  {
+    "id": "EXP-1789633644",
+    "timestamp": "2026-09-17T15:27:24+0700",
+    "motor_name": "Sunnysky V4006 740KV",
+    "profile_name": "sunnysky_v4006_740kv_flight_35a_maxload",
+    "hardware_target": "High-Fidelity Mock Simulator",
+    "max_tracking_error_pct": 0.0,
+    "breakaway_current_a": 0.57,
+    "max_duty_achieved": 0.396,
+    "all_passed": true,
+    "summary": "LEVEL 1 CERTIFIED",
+    "recommendations": []
+  },
+  {
+    "id": "EXP-1789633644",
+    "timestamp": "2026-09-17T15:27:24+0700",
+    "motor_name": "Sunnysky V4006 740KV",
+    "profile_name": "sunnysky_v4006_740kv_flight_35a_maxload",
+    "hardware_target": "High-Fidelity Mock Simulator",
+    "max_tracking_error_pct": 10.0,
+    "breakaway_current_a": 10.19,
+    "max_duty_achieved": 0.39899999999999997,
+    "all_passed": false,
+    "summary": "FAILED - VIOLATIONS DETECTED",
+    "recommendations": [
+      {
+        "parameter": "s_pid_ki",
+        "current_value": 0.0005,
+        "suggested_value": 0.000575,
+        "rationale": "Increase speed integral gain by 15% to eliminate residual tracking droop.",
+        "confidence": 0.85
+      }
+    ]
+  },
+  {
+    "id": "EXP-1789633682",
+    "timestamp": "2026-09-17T15:28:02+0700",
+    "motor_name": "Sunnysky V4006 740KV",
+    "profile_name": "sunnysky_v4006_740kv_flight_35a_maxload",
+    "hardware_target": "High-Fidelity Mock Simulator",
+    "max_tracking_error_pct": 0.02,
+    "breakaway_current_a": 0.57,
+    "max_duty_achieved": 0.396,
+    "all_passed": true,
+    "summary": "LEVEL 1 CERTIFIED",
+    "recommendations": []
+  },
+  {
+    "id": "EXP-1789633682",
+    "timestamp": "2026-09-17T15:28:02+0700",
+    "motor_name": "Sunnysky V4006 740KV",
+    "profile_name": "sunnysky_v4006_740kv_flight_35a_maxload",
+    "hardware_target": "High-Fidelity Mock Simulator",
+    "max_tracking_error_pct": 0.02,
+    "breakaway_current_a": 0.57,
+    "max_duty_achieved": 0.396,
+    "all_passed": true,
+    "summary": "LEVEL 1 CERTIFIED",
+    "recommendations": []
+  },
+  {
+    "id": "EXP-1789633682",
+    "timestamp": "2026-09-17T15:28:02+0700",
+    "motor_name": "Sunnysky V4006 740KV",
+    "profile_name": "sunnysky_v4006_740kv_flight_35a_maxload",
+    "hardware_target": "High-Fidelity Mock Simulator",
+    "max_tracking_error_pct": 0.5,
+    "breakaway_current_a": 9.82,
+    "max_duty_achieved": 0.39899999999999997,
+    "all_passed": true,
+    "summary": "LEVEL 1 CERTIFIED",
+    "recommendations": []
   }
 ]

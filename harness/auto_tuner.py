@@ -211,3 +211,41 @@ class VESCAutoTuner:
             raise SafetyViolationError(f"Auto-tuning validation failed with safety violations: {violations}")
 
         return profile
+
+    def tune_with_propeller(
+        self,
+        propeller_diameter_inch: float = 14.0,
+        propeller_pitch_inch: float = 4.8,
+        mode: OperatingMode = OperatingMode.FLIGHT_MAXLOAD
+    ) -> Dict[str, Any]:
+        """Synthesizes an optimal FOC profile tailored to a specific propeller load."""
+        profile = self.tune_for_mode(mode)
+
+        # Approximate propeller inertia and drag torque
+        # Carbon prop mass estimation: M ~ 0.0011 * D^1.3 kg
+        prop_mass_kg = 0.0011 * (propeller_diameter_inch ** 1.3)
+        radius_m = (propeller_diameter_inch * 0.0254) / 2.0
+        prop_inertia_j = (1.0 / 3.0) * prop_mass_kg * (radius_m ** 2)
+
+        # Aerodynamic torque coefficient: Tau_aero = k_drag * (RPM/1000)^2
+        k_drag = 0.020 * ((propeller_diameter_inch / 14.0) ** 4) * (propeller_pitch_inch / 4.8)
+
+        # Enhance startup breakaway torque for heavy propeller inertia
+        profile["openloop_settings"]["foc_openloop_rpm"] = max(1000.0, profile["openloop_settings"].get("foc_openloop_rpm", 800.0) * 1.25)
+        profile["openloop_settings"]["foc_sl_openloop_boost_q"] = round(profile["openloop_settings"].get("foc_sl_openloop_boost_q", 2.5) * 1.35, 2)
+
+        # Scale speed PI to account for higher inertia without inducing hunting
+        inertia_ratio = max(1.0, prop_inertia_j / 3.5e-5)
+        profile["speed_limits"]["s_pid_kp"] = round(profile["speed_limits"]["s_pid_kp"] * min(2.5, 1.0 + 0.15 * inertia_ratio), 5)
+        profile["speed_limits"]["s_pid_ramp_erpms_s"] = round(min(profile["speed_limits"].get("s_pid_ramp_erpms_s", 25000.0), 30000.0), 1)
+
+        # Attach propeller load spec to profile
+        profile["propeller_load"] = {
+            "diameter_inch": propeller_diameter_inch,
+            "pitch_inch": propeller_pitch_inch,
+            "inertia_j": round(prop_inertia_j, 6),
+            "k_drag": round(k_drag, 4)
+        }
+        profile["metadata"]["description"] += f" (Optimized for {propeller_diameter_inch}x{propeller_pitch_inch} Propeller)"
+
+        return profile

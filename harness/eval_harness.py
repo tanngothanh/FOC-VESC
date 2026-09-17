@@ -92,8 +92,18 @@ class MockVESCHardware:
         self.target_mech_rpm = 0.0
         self.target_duty = 0.0
 
-        # Rotor inertia and drag coefficients
-        self.inertia_j = 3.5e-5 # kg*m^2 (typical small outrunner)
+        # Rotor inertia and propeller load modeling
+        self.inertia_j = 3.5e-5 # kg*m^2 (typical small outrunner bare rotor)
+        self.propeller_load = config.get("propeller_load", None)
+        if self.propeller_load:
+            # Propeller adds inertia and quadratic aerodynamic drag torque
+            self.prop_j = self.propeller_load.get("inertia_j", 1.8e-4)
+            self.inertia_j += self.prop_j
+            # k_drag: Torque (Nm) = k_drag * (RPM / 1000)^2
+            self.k_drag = self.propeller_load.get("k_drag", 0.020)
+        else:
+            self.prop_j = 0.0
+            self.k_drag = 0.0
 
     @property
     def last_cmd_time(self) -> float:
@@ -195,17 +205,22 @@ class MockVESCHardware:
 
         # Calculate steady-state speed for given duty at v_bus
         ideal_rpm = self.duty_now * (self.v_bus * self.kv)
-        # First-order motor speed response (time constant tau ~ 0.05s)
-        tau = 0.05
-        self.mech_rpm += (ideal_rpm - self.mech_rpm) * (dt / tau)
+        # Scaled motor speed response time constant based on total inertia
+        tau = 0.05 * (self.inertia_j / 3.5e-5)
+        self.mech_rpm += (ideal_rpm - self.mech_rpm) * (dt / max(0.01, tau))
         self.mech_rpm = max(0.0, self.mech_rpm)
+
+        # Calculate aerodynamic load torque: Tau_aero = k_drag * (RPM/1000)^2
+        drag_torque = self.k_drag * ((self.mech_rpm / 1000.0) ** 2)
+        kt = 9.55 / max(1.0, self.kv)
+        load_current = drag_torque / kt if kt > 0 else 0.0
 
         # Calculate currents
         bemf = self.mech_rpm / self.kv
         v_applied = self.duty_now * self.v_bus
         i_phase = max(0.0, (v_applied - bemf) / (self.r_phase * 1.5))
-        # Add no-load idle current
-        i_phase = min(self.i_phase_max, i_phase + 0.35)
+        # Add aerodynamic load current and no-load idle current
+        i_phase = min(self.i_phase_max, i_phase + load_current + 0.35)
         self.motor_current = round(i_phase, 2)
 
         # DC Battery current: I_dc = Duty * I_phase (efficiency ~ 96%)
@@ -288,9 +303,11 @@ class EvalHarness:
         # -------------------------------------------------------------
         # Test 2: Breakaway Stiction & Startup (Soft Breakaway)
         # -------------------------------------------------------------
-        # Pulse de-pa for 8 steps
-        for _ in range(8):
-            self._set_duty(0.045)
+        is_prop = self.config.get("propeller_load") is not None
+        startup_steps = 15 if is_prop else 8
+        startup_duty = 0.055 if is_prop else 0.045
+        for _ in range(startup_steps):
+            self._set_duty(startup_duty)
             telem = self._get_telemetry()
             if self.is_live:
                 time.sleep(0.02)
@@ -311,13 +328,15 @@ class EvalHarness:
         # -------------------------------------------------------------
         # Test 3: Operating Speed Tracking (1,000 to 6,000 RPM)
         # -------------------------------------------------------------
-        test_points_rpm = [1000, 1500, 2500, 3500, 4500, 6000]
+        max_envelope_rpm = 4800 if is_prop else 6000
+        test_points_rpm = [1000, 1500, 2500, 3500, max_envelope_rpm]
+        settle_steps = 40 if is_prop else 25
         speed_errors = []
 
         for target_rpm in test_points_rpm:
             target_erpm = target_rpm * pole_pairs
-            # Stream commands for 25 steps to allow speed PI to settle cleanly
-            for _ in range(25):
+            # Stream commands to allow speed PI to settle cleanly
+            for _ in range(settle_steps):
                 self._set_rpm(target_erpm)
                 telem = self._get_telemetry()
                 if self.is_live:

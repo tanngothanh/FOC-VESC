@@ -91,6 +91,16 @@ class VESCMotorEngineerHarness:
         op_mode = OperatingMode(mode) if mode in [m.value for m in OperatingMode] else OperatingMode.FLIGHT_MAXLOAD
         return self.tuner.tune_for_mode(op_mode)
 
+    def generate_propeller_profile(
+        self,
+        propeller_diameter_inch: float = 14.0,
+        propeller_pitch_inch: float = 4.8,
+        mode: str = "flight_maxload"
+    ) -> Dict[str, Any]:
+        """Generates a complete VESC profile optimized for a specific propeller."""
+        op_mode = OperatingMode(mode) if mode in [m.value for m in OperatingMode] else OperatingMode.FLIGHT_MAXLOAD
+        return self.tuner.tune_with_propeller(propeller_diameter_inch, propeller_pitch_inch, op_mode)
+
     def validate(self, config: Dict[str, Any]) -> Tuple_Result:
         """Validates configuration against all aerospace invariants."""
         violations = VESCConfigEngine.validate_configuration(config, self.hardware)

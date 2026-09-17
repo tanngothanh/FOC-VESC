@@ -348,3 +348,23 @@ class TestAgentInterfaceFacade:
             assert Path(paths["json_profile"]).exists()
             assert Path(paths["mcconf_xml"]).exists()
             assert Path(paths["appconf_xml"]).exists()
+
+    def test_propeller_tuning_and_simulation(self):
+        harness = VESCMotorEngineerHarness()
+        prop_prof = harness.generate_propeller_profile(
+            propeller_diameter_inch=14.0,
+            propeller_pitch_inch=4.8,
+            mode="flight_maxload"
+        )
+
+        assert "propeller_load" in prop_prof
+        assert prop_prof["propeller_load"]["diameter_inch"] == 14.0
+        assert prop_prof["propeller_load"]["pitch_inch"] == 4.8
+        assert prop_prof["propeller_load"]["inertia_j"] > 0
+
+        is_valid, violations = harness.validate(prop_prof)
+        assert is_valid is True
+        assert len(violations) == 0
+
+        report, record = harness.run_evaluation(prop_prof)
+        assert report.all_passed is True
