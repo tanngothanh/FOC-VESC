@@ -1,0 +1,16 @@
+# Binaries
+vesc_tool_7.00.exe
+*.exe
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+*.log
+
+# OS artifacts
+desktop.ini
+Thumbs.db
+.DS_Store
+debug.txt

@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<APPConfiguration>
+    <controller_id>103</controller_id>
+    <app_to_use>0</app_to_use>
+    <can_baud_rate>3</can_baud_rate>
+    <can_mode>4</can_mode>
+    <uavcan_esc_index>0</uavcan_esc_index>
+    <uavcan_raw_mode>3</uavcan_raw_mode>
+    <uavcan_raw_rpm_min>12000.0</uavcan_raw_rpm_min>
+    <uavcan_raw_rpm_max>72000.0</uavcan_raw_rpm_max>
+    <uavcan_status_current_mode>0</uavcan_status_current_mode>
+    <send_can_status>0</send_can_status>
+    <send_can_status_rate_hz>50</send_can_status_rate_hz>
+</APPConfiguration>

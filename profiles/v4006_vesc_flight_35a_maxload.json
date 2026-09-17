@@ -1,0 +1,85 @@
+{
+  "metadata": {
+    "subsystem": "PROP-SUB-05",
+    "aircraft": "CT-2W1 eVTOL Scale 1:6",
+    "motor_model": "Sunnysky V4006 740KV",
+    "profile_name": "flight_35a_maxload",
+    "description": "Full mission profile with 27.5A DC battery limit (<28A hard limit), 35.0A motor continuous limit (35A/30s), 560W power clamp, unidirectional rotation (0 RPM reverse), and 6000 Mech RPM (72000 ERPM) clamp."
+  },
+  "motor_parameters": {
+    "motor_type": 2,
+    "motor_type_str": "MOTOR_TYPE_FOC",
+    "poles": 24,
+    "pole_pairs": 12,
+    "kv": 740,
+    "r_phase_ohm": 0.047,
+    "l_phase_h": 1.413e-05,
+    "flux_linkage_wb": 0.00062087
+  },
+  "current_limits": {
+    "l_current_max": 35.0,
+    "l_current_min": -3.0,
+    "l_in_current_max": 27.5,
+    "l_in_current_min": 0.0,
+    "l_abs_current_max": 55.0,
+    "l_watt_max": 560.0,
+    "l_watt_min": 0.0,
+    "l_min_duty": 0.005,
+    "l_max_duty": 0.47,
+    "l_slow_abs_current": 1
+  },
+  "speed_limits": {
+    "min_mech_rpm": 1000,
+    "max_mech_rpm": 6000,
+    "l_min_erpm": 0.0,
+    "l_max_erpm": 72000.0,
+    "l_erpm_start": 0.98,
+    "s_pid_min_erpm": 900.0,
+    "s_pid_kp": 0.002,
+    "s_pid_ki": 0.0005,
+    "s_pid_kd": 0.0,
+    "s_pid_kd_filter": 0.0,
+    "s_pid_allow_braking": 1,
+    "s_pid_ramp_erpms_s": 30000.0
+  },
+  "openloop_settings": {
+    "foc_openloop_rpm": 3800.0,
+    "foc_openloop_rpm_low": 0.85,
+    "foc_sl_openloop_hyst": 0.1,
+    "foc_sl_openloop_time_lock": 0.1,
+    "foc_sl_openloop_time_ramp": 0.35,
+    "foc_sl_openloop_time": 0.15,
+    "foc_sl_openloop_boost_q": 2.5,
+    "foc_sl_openloop_max_q": 4.5
+  },
+  "foc_settings": {
+    "foc_sensor_mode": 0,
+    "foc_sensor_mode_str": "FOC_SENSOR_MODE_SENSORLESS",
+    "foc_f_zv": 24000.0,
+    "foc_dt_us": 0.12,
+    "foc_observer_type": 3,
+    "foc_observer_type_str": "FOC_OBSERVER_MXLEMMING_LAMBDA_COMP",
+    "foc_cc_decoupling": 0,
+    "foc_cc_decoupling_str": "FOC_CC_DECOUPLING_DISABLED",
+    "foc_observer_gain": 90000000.0,
+    "foc_current_kp": 0.0169,
+    "foc_current_ki": 46.17
+  },
+  "can_uavcan": {
+    "controller_id": 103,
+    "can_baud_rate": 3,
+    "can_baud_rate_str": "CAN_BAUD_1M",
+    "can_mode": 4,
+    "can_mode_str": "CAN_MODE_VESC_UAVCAN",
+    "timeout_msec": 200,
+    "uavcan_esc_index": 0,
+    "uavcan_raw_mode": 3,
+    "uavcan_raw_mode_str": "RPM Control",
+    "uavcan_raw_rpm_min": 12000.0,
+    "uavcan_raw_rpm_max": 72000.0,
+    "uavcan_status_current_mode": 0,
+    "uavcan_status_current_mode_str": "Motor Current",
+    "send_can_status": 1,
+    "send_can_status_rate_hz": 50
+  }
+}

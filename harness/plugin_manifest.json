@@ -1,0 +1,83 @@
+{
+  "plugin_id": "vesc-motor-engineer",
+  "name": "VESC Autonomous Motor Engineering Plugin",
+  "version": "1.0.0",
+  "category": "propulsion_motor_control",
+  "domain": "PROP-SUB-05",
+  "description": "Autonomous motor engineering, FOC tuning, aerospace safety auditing, dynamic evaluation, and continuous learning harness for VESC motor controllers across arbitrary BLDC/PMSM motors and power tiers.",
+  "entry_point": "05_Propulsion_System.VESC.harness.agent_interface.VESCMotorEngineerHarness",
+  "cli_module": "05_Propulsion_System.VESC.harness.hub_connector",
+  "author": "PS1Lab CT-2W1 eVTOL Propulsion Systems Team",
+  "compatibility": {
+    "python": ">=3.9",
+    "vesc_firmware": ">=6.0",
+    "dronecan": "v1.0",
+    "platforms": [
+      "langgraph",
+      "n8n",
+      "autogen",
+      "crewai",
+      "gemini-cli",
+      "standalone-cli"
+    ]
+  },
+  "safety_invariants": [
+    {
+      "id": "RULE-ANTI-HFI",
+      "description": "foc_sensor_mode=3 (HFI) is strictly prohibited on surface permanent magnet (SPM) outrunners.",
+      "enforcement": "hard_rejection"
+    },
+    {
+      "id": "RULE-ANTI-BACKFEED",
+      "description": "l_in_current_min >= 0.0A prevents reverse regenerative charging into unidirectional DC power supplies.",
+      "enforcement": "hard_rejection"
+    },
+    {
+      "id": "RULE-DUTY-CLAMP",
+      "description": "l_max_duty must be physically clamped based on V_bus and Kv to prevent bare-motor high throttle runaway.",
+      "enforcement": "hard_clamp"
+    },
+    {
+      "id": "RULE-UNIDIRECTIONAL",
+      "description": "l_min_erpm = 0.0 enforces unidirectional forward rotation for fixed-pitch propellers.",
+      "enforcement": "hard_rejection"
+    },
+    {
+      "id": "RULE-WATCHDOG",
+      "description": "timeout_msec <= 300 enforces communication loss failsafe cutoff.",
+      "enforcement": "hard_rejection"
+    },
+    {
+      "id": "RULE-SENSORLESS-KD-ZERO",
+      "description": "s_pid_kd = 0.0 prevents observer PLL noise amplification and high-frequency chattering.",
+      "enforcement": "hard_rejection"
+    }
+  ],
+  "tools": [
+    {
+      "name": "vesc_calculate_config",
+      "method": "HubConnector.dispatch('vesc_calculate_config', ...)",
+      "description": "Calculates optimal VESC FOC parameters, current limits, and anti-runaway duty clamps for a given motor specification."
+    },
+    {
+      "name": "vesc_validate_config",
+      "method": "HubConnector.dispatch('vesc_validate_config', ...)",
+      "description": "Audits a VESC configuration against strict physical and aerospace safety invariants."
+    },
+    {
+      "name": "vesc_run_eval_suite",
+      "method": "HubConnector.dispatch('vesc_run_eval_suite', ...)",
+      "description": "Executes full aerospace verification test suite on High-Fidelity Mock Simulator or Live Hardware."
+    },
+    {
+      "name": "vesc_get_learning_history",
+      "method": "HubConnector.dispatch('vesc_get_learning_history', ...)",
+      "description": "Retrieves statistical benchmarks, regression alerts, and tuning recommendations from the continuous learning loop."
+    },
+    {
+      "name": "vesc_export_xml",
+      "method": "HubConnector.dispatch('vesc_export_xml', ...)",
+      "description": "Exports a VESC profile to VESC Tool MCConfiguration and APPConfiguration XML format."
+    }
+  ]
+}
