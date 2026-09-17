@@ -1,0 +1,112 @@
+{
+  "timestamp": "2026-09-17T22:19:51",
+  "status": "PASS",
+  "overall_score": 98.1,
+  "overall_rating": "CERTIFIED_QUIET (Ch\u1ea5t l\u01b0\u1ee3ng V\u00e0ng / \u00cam \u00e1i tuy\u1ec7t \u0111\u1ed1i)",
+  "decel_anti_hang_time_s": 0.6049792766571045,
+  "anti_hang_passed": true,
+  "phases": {
+    "Phase_1_Breakaway_1000RPM": {
+      "throttle_pct": 16.7,
+      "target_mech_rpm": 1000.0,
+      "metrics": {
+        "sample_count": 17,
+        "rpm_mean": 993.0,
+        "rpm_std": 9.55,
+        "current_mot_mean": 0.3,
+        "current_mot_std": 0.021,
+        "duty_mean": 8.2,
+        "duty_std": 0.4,
+        "jerk_events_count": 0,
+        "max_jerk_rpm": 18.5,
+        "fault_free": true
+      },
+      "smoothness_score": 94.7,
+      "rating": "CERTIFIED_QUIET (Ch\u1ea5t l\u01b0\u1ee3ng V\u00e0ng / \u00cam \u00e1i tuy\u1ec7t \u0111\u1ed1i)"
+    },
+    "Phase_2_LowCruise_2250RPM": {
+      "throttle_pct": 37.5,
+      "target_mech_rpm": 2250.0,
+      "metrics": {
+        "sample_count": 17,
+        "rpm_mean": 2247.0,
+        "rpm_std": 4.24,
+        "current_mot_mean": 0.14,
+        "current_mot_std": 0.009,
+        "duty_mean": 17.5,
+        "duty_std": 0.16,
+        "jerk_events_count": 0,
+        "max_jerk_rpm": 4.8,
+        "fault_free": true
+      },
+      "smoothness_score": 97.7,
+      "rating": "CERTIFIED_QUIET (Ch\u1ea5t l\u01b0\u1ee3ng V\u00e0ng / \u00cam \u00e1i tuy\u1ec7t \u0111\u1ed1i)"
+    },
+    "Phase_3_MidCruise_3500RPM": {
+      "throttle_pct": 58.3,
+      "target_mech_rpm": 3500.0,
+      "metrics": {
+        "sample_count": 17,
+        "rpm_mean": 3500.2,
+        "rpm_std": 1.33,
+        "current_mot_mean": 0.01,
+        "current_mot_std": 0.004,
+        "duty_mean": 27.02,
+        "duty_std": 0.07,
+        "jerk_events_count": 0,
+        "max_jerk_rpm": 3.3,
+        "fault_free": true
+      },
+      "smoothness_score": 99.2,
+      "rating": "CERTIFIED_QUIET (Ch\u1ea5t l\u01b0\u1ee3ng V\u00e0ng / \u00cam \u00e1i tuy\u1ec7t \u0111\u1ed1i)"
+    },
+    "Phase_4_HighCruise_4750RPM": {
+      "throttle_pct": 79.2,
+      "target_mech_rpm": 4750.0,
+      "metrics": {
+        "sample_count": 17,
+        "rpm_mean": 6043.7,
+        "rpm_std": 1.58,
+        "current_mot_mean": -0.09,
+        "current_mot_std": 0.005,
+        "duty_mean": 46.91,
+        "duty_std": 0.06,
+        "jerk_events_count": 0,
+        "max_jerk_rpm": 4.0,
+        "fault_free": true
+      },
+      "smoothness_score": 99.1,
+      "rating": "CERTIFIED_QUIET (Ch\u1ea5t l\u01b0\u1ee3ng V\u00e0ng / \u00cam \u00e1i tuy\u1ec7t \u0111\u1ed1i)"
+    },
+    "Phase_5_MaxCeiling_6000RPM": {
+      "throttle_pct": 100.0,
+      "target_mech_rpm": 6000.0,
+      "metrics": {
+        "sample_count": 20,
+        "rpm_mean": 6047.3,
+        "rpm_std": 0.48,
+        "current_mot_mean": -0.1,
+        "current_mot_std": 0.005,
+        "duty_mean": 46.89,
+        "duty_std": 0.04,
+        "jerk_events_count": 0,
+        "max_jerk_rpm": 0.8,
+        "fault_free": true
+      },
+      "smoothness_score": 99.6,
+      "rating": "CERTIFIED_QUIET (Ch\u1ea5t l\u01b0\u1ee3ng V\u00e0ng / \u00cam \u00e1i tuy\u1ec7t \u0111\u1ed1i)"
+    }
+  },
+  "overall_metrics": {
+    "sample_count": 118,
+    "rpm_mean": 3714.3,
+    "rpm_std": 118.1,
+    "current_mot_mean": 0.06,
+    "current_mot_std": 0.039,
+    "duty_mean": 28.97,
+    "duty_std": 0.89,
+    "jerk_events_count": 2,
+    "max_jerk_rpm": 351.3,
+    "fault_free": true
+  }
+}

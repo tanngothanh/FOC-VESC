@@ -10,8 +10,8 @@ import sys
 import time
 import dronecan
 
-def test_uavcan_method_a(port="slcan:COM16", target_cmd=600, duration=1.5):
-    print(f"Connecting to DroneCAN on {port}...")
+def test_uavcan_method_a(port="slcan:COM16", target_cmd=600, duration=1.5, esc_index=1):
+    print(f"Connecting to DroneCAN on {port} (Target ESC Index: {esc_index})...")
     node = dronecan.make_node(port, node_id=127, bitrate=1000000, baudrate=115200)
 
     vesc_statuses = []
@@ -46,23 +46,26 @@ def test_uavcan_method_a(port="slcan:COM16", target_cmd=600, duration=1.5):
         last = vesc_statuses[-1]
         print(f"Initial VESC Telemetry: RPM={last['rpm']}, V={last['voltage']:.1f}V, I={last['current']:.2f}A, Temp={last['temperature']:.1f}C")
 
-    print(f"\n>>> SENDING DRONECAN RAWCOMMAND (cmd={target_cmd}, ~{target_cmd/81.92:.1f}% throttle) for {duration}s <<<")
+    print(f"\n>>> SENDING DRONECAN RAWCOMMAND (cmd={target_cmd}, ~{target_cmd/81.92:.1f}% throttle, ESC {esc_index}) for {duration}s <<<")
     t0 = time.time()
     t_end = t0 + duration
     last_send = 0.0
 
+    raw_array = [0, target_cmd] if esc_index == 1 else [target_cmd]
+    stop_array = [0, 0] if esc_index == 1 else [0]
+
     while time.time() < t_end:
         now = time.time()
         if now - last_send >= 0.02: # 50 Hz
-            cmd_msg = dronecan.uavcan.equipment.esc.RawCommand(cmd=[target_cmd])
+            cmd_msg = dronecan.uavcan.equipment.esc.RawCommand(cmd=raw_array)
             node.broadcast(cmd_msg)
             last_send = now
         spin_safe(0.005)
 
     # Stop command (send 0 for 300ms)
-    print("Sending Stop command (cmd=0)...")
+    print("Sending Stop command...")
     for _ in range(15):
-        node.broadcast(dronecan.uavcan.equipment.esc.RawCommand(cmd=[0]))
+        node.broadcast(dronecan.uavcan.equipment.esc.RawCommand(cmd=stop_array))
         spin_safe(0.02)
 
     print(f"\nTotal VESC Telemetry Status frames received: {len(vesc_statuses)}")

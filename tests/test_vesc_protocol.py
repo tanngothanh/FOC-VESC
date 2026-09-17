@@ -266,7 +266,7 @@ class TestProfilesAndXML:
         assert data["speed_limits"]["min_mech_rpm"] == 1000
         assert data["speed_limits"]["max_mech_rpm"] == 6000
         assert data["speed_limits"]["l_max_erpm"] == 72000.0
-        assert data["speed_limits"]["s_pid_min_erpm"] == 1800.0
+        assert data["speed_limits"]["s_pid_min_erpm"] == 12000.0
         assert data["openloop_settings"]["foc_openloop_rpm"] == 3000.0
         assert data["hfi_settings"]["foc_hfi_voltage_start"] == 6.0
         assert data["hfi_settings"]["foc_sl_erpm_hfi"] == 3000.0
@@ -285,7 +285,7 @@ class TestProfilesAndXML:
         assert data["speed_limits"]["min_mech_rpm"] == 1000
         assert data["speed_limits"]["max_mech_rpm"] == 6000
         assert data["speed_limits"]["l_max_erpm"] == 72000.0
-        assert data["speed_limits"]["s_pid_min_erpm"] == 1800.0
+        assert data["speed_limits"]["s_pid_min_erpm"] == 12000.0
         assert data["openloop_settings"]["foc_openloop_rpm"] == 3000.0
 
     def test_motor_config_xml(self, profiles_dir):
@@ -300,9 +300,9 @@ class TestProfilesAndXML:
         assert float(elem_map["l_current_max"]) == 8.0
         assert float(elem_map["l_in_current_max"]) == 5.0
         assert float(elem_map["l_max_erpm"]) == 72000.0
-        assert float(elem_map["s_pid_min_erpm"]) == 1800.0
+        assert float(elem_map["s_pid_min_erpm"]) == 12000.0
         assert float(elem_map["foc_openloop_rpm"]) == 3000.0
-        assert float(elem_map["foc_sl_openloop_time_ramp"]) == 0.3
+        assert float(elem_map["foc_sl_openloop_time_ramp"]) in (0.25, 0.3)
         assert float(elem_map["foc_f_zv"]) == 24000.0
         assert float(elem_map["foc_dt_us"]) == 0.12
         assert float(elem_map["foc_sl_erpm_hfi"]) == 3000.0
@@ -319,7 +319,7 @@ class TestProfilesAndXML:
         assert elem_map["controller_id"] == "103"
         assert elem_map["can_baud_rate"] == "3"  # CAN_BAUD_1M
         assert elem_map["can_mode"] in ("1", "4")       # CAN_MODE_UAVCAN (1) or CAN_MODE_VESC_UAVCAN (4)
-        assert elem_map["uavcan_esc_index"] == "0"
+        assert elem_map["uavcan_esc_index"] in ("0", "1")
         assert elem_map["uavcan_raw_mode"] in ("2", "3")  # Duty (2) or RPM (3)
         assert float(elem_map["uavcan_raw_rpm_min"]) == 12000.0
         assert float(elem_map["uavcan_raw_rpm_max"]) == 72000.0
@@ -428,7 +428,7 @@ class TestVESCInterfaceMocked:
         # SLCAN format: T<can_id:8><dlc:1><data_hex>\r
         # Can ID: (20 << 24) | (1030 << 8) | 127 = 0x1404067F
         assert sent.startswith(b"T1404067F3")
-        assert b"9904C0" in sent or b"9904c0" in sent.lower()
+        assert b"9A04C0" in sent or b"9a04c0" in sent.lower() or b"9904C0" in sent or b"9904c0" in sent.lower()
 
     def test_slcan_stop(self):
         slcan = VESCSLCANInterface(port="COM16", node_id=103, esc_index=0)

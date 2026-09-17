@@ -717,11 +717,30 @@ static void handle_esc_raw_command(CanardInstance* ins, CanardRxTransfer* transf
 					break;
 
 				case UAVCAN_RAW_MODE_DUTY:
-					mc_interface_set_duty(raw_val);
+					if (raw_val <= 0.015f) {
+						mc_interface_release_motor();
+					} else {
+						mc_interface_set_duty(raw_val);
+					}
 					break;
 
 				case UAVCAN_RAW_MODE_RPM:
-					mc_interface_set_pid_speed(raw_val * conf->uavcan_raw_rpm_max);
+					if (raw_val <= 0.015f) {
+						// Hard cutoff below 1.5% throttle: immediately release motor gates (AM32 allOff behavior)
+						mc_interface_release_motor();
+					} else {
+						// Linear mapping [1000..6000 Mech RPM] across active throttle [0.015..1.0]
+						float norm = (raw_val - 0.015f) / (1.0f - 0.015f);
+						if (norm > 1.0f) {
+							norm = 1.0f;
+						}
+						float target_mech_rpm = 1000.0f + norm * 5000.0f;
+						float pole_pairs = (float)conf->si_motor_poles / 2.0f;
+						if (pole_pairs < 1.0f) {
+							pole_pairs = 12.0f;
+						}
+						mc_interface_set_pid_speed(target_mech_rpm * pole_pairs);
+					}
 					break;
 
 				default:
@@ -759,7 +778,17 @@ static void handle_esc_rpm_command(CanardInstance* ins, CanardRxTransfer* transf
 			}
 #endif
 
-			mc_interface_set_pid_speed(rpm_val);
+			if (fabsf(rpm_val) < 100.0f) {
+				// Zero/near-zero RPM command: hard release gates
+				mc_interface_release_motor();
+			} else {
+				// Convert Mechanical RPM to Electrical RPM via pole pairs
+				float pole_pairs = (float)app_get_configuration()->si_motor_poles / 2.0f;
+				if (pole_pairs < 1.0f) {
+					pole_pairs = 12.0f;
+				}
+				mc_interface_set_pid_speed(rpm_val * pole_pairs);
+			}
 			timeout_reset();
 		}
 	}

@@ -1,6 +1,7 @@
 # Binaries
 vesc_tool_7.00.exe
 *.exe
+*.bin
 
 # Python
 __pycache__/

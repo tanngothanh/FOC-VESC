@@ -23,6 +23,13 @@ except ImportError:
     except ImportError:
         mavlink2 = None
 
+try:
+    import dronecan
+    from dronecan.transport import bytes_from_bits
+except ImportError:
+    dronecan = None
+    bytes_from_bits = None
+
 from .vesc_protocol import (
     encode_packet,
     decode_packet,
@@ -53,6 +60,40 @@ def throttle_to_mech_rpm(throttle: float, min_rpm: float = 1000.0, max_rpm: floa
     clamped = min(1.0, max(0.01, float(throttle)))
     rpm = min_rpm + ((clamped - 0.01) / 0.99) * (max_rpm - min_rpm)
     return int(round(rpm))
+
+
+def throttle_to_duty(throttle: float, min_duty: float = 0.105, max_duty: float = 0.480) -> float:
+    """Calibrated mapping of throttle (0.0 to 1.0) to VESC duty cycle for exact 1000-6000 Mech RPM.
+    
+    Empirical calibration points on Sunnysky V4006 740KV (20.4V supply):
+    - 0%   Throttle -> 0.000 duty (0 Mech RPM, motor stopped)
+    - 1%   Throttle -> 0.105 duty (1000 Mech RPM / 12,000 ERPM, zero slip/cogging)
+    - 25%  Throttle -> 0.235 duty (2250 Mech RPM / 27,000 ERPM)
+    - 50%  Throttle -> 0.355 duty (3500 Mech RPM / 42,000 ERPM)
+    - 75%  Throttle -> 0.445 duty (4750 Mech RPM / 57,000 ERPM)
+    - 100% Throttle -> 0.480 duty (6000 Mech RPM / 72,000 ERPM)
+    """
+    if throttle < 0.01:
+        return 0.0
+
+    # Calibrated lookup points (throttle, duty)
+    lut = [
+        (0.01, 0.100),
+        (0.25, 0.225),
+        (0.50, 0.340),
+        (0.75, 0.435),
+        (1.00, 0.475),
+    ]
+
+    t = max(0.01, min(1.0, float(throttle)))
+    for i in range(len(lut) - 1):
+        t0, d0 = lut[i]
+        t1, d1 = lut[i + 1]
+        if t0 <= t <= t1:
+            ratio = (t - t0) / (t1 - t0)
+            return float(d0 + ratio * (d1 - d0))
+
+    return float(max_duty)
 
 
 def mech_rpm_to_erpm(mech_rpm: int, pole_pairs: int = 12) -> int:
@@ -265,7 +306,7 @@ class VESCSLCANInterface:
     CAN_PACKET_STATUS_5 = 27
 
     def __init__(self, port: str = "COM16", baudrate: int = 115200,
-                 node_id: int = 103, esc_index: int = 0, timeout: float = 0.5,
+                 node_id: int = 103, esc_index: int = 1, timeout: float = 0.5,
                  smart_depa: bool = True):
         self.port = port
         self.baudrate = baudrate
@@ -389,13 +430,24 @@ class VESCSLCANInterface:
         # Note: VESC canard_driver.c passes rpm_val directly to mc_interface_set_pid_speed, expecting ERPM
         dronecan_id = (20 << 24) | (1031 << 8) | 127
         val = int(erpm) & 0x3FFFF
-        bitfield = (1 & 0x1F) | (val << 5)
-        b0 = bitfield & 0xFF
-        b1 = (bitfield >> 8) & 0xFF
-        b2 = (bitfield >> 16) & 0xFF
-        tail = 0xC0 | (self._transfer_id & 0x1F)
-        self._transfer_id = (self._transfer_id + 1) % 32
-        dronecan_data = bytes([b0, b1, b2, tail])
+        if self.esc_index == 1:
+            packed = val << 18
+            b0 = packed & 0xFF
+            b1 = (packed >> 8) & 0xFF
+            b2 = (packed >> 16) & 0xFF
+            b3 = (packed >> 24) & 0xFF
+            b4 = (packed >> 32) & 0xFF
+            tail = 0xC0 | (self._transfer_id & 0x1F)
+            self._transfer_id = (self._transfer_id + 1) % 32
+            dronecan_data = bytes([b0, b1, b2, b3, b4, tail])
+        else:
+            bitfield = (1 & 0x1F) | (val << 5)
+            b0 = bitfield & 0xFF
+            b1 = (bitfield >> 8) & 0xFF
+            b2 = (bitfield >> 16) & 0xFF
+            tail = 0xC0 | (self._transfer_id & 0x1F)
+            self._transfer_id = (self._transfer_id + 1) % 32
+            dronecan_data = bytes([b0, b1, b2, tail])
         self.send_can_frame(dronecan_id, dronecan_data, is_extended=True)
 
     def set_rpm(self, rpm_val: int) -> None:
@@ -415,21 +467,52 @@ class VESCSLCANInterface:
     def send_raw_command(self, raw_throttle: float) -> None:
         """Sends DroneCAN uavcan.equipment.esc.RawCommand (Msg ID 1030).
         
-        raw_throttle: 0.0 to 1.0 normalized thrust command.
-        Uses Tail Array Optimization (TAO) conforming to DroneCAN DSDL specification:
-        - Byte 0: lower 8 bits of 14-bit scalar
-        - Byte 1: upper 6 bits shifted by 2 (canardDecodeScalar format)
-        - Byte 2: Tail byte (0xC0 | transfer_id)
+        raw_throttle: 0.0 to 1.0 normalized thrust/duty command.
+        Uses Tail Array Optimization (TAO) conforming to DroneCAN DSDL specification.
         """
-        # DroneCAN Msg ID 1030 (0x0406), Priority 20 (0x14), Source Node 127
-        dronecan_id = (20 << 24) | (1030 << 8) | 127
-        val = int(max(0.0, min(1.0, float(raw_throttle))) * 8191.0) & 0x3FFF
-        b0 = val & 0xFF
-        b1 = ((val >> 8) & 0x3F) << 2
+        int_val = int(round(max(0.0, min(1.0, float(raw_throttle))) * 8192.0))
+        int_val = max(0, min(8191, int_val))
+        
+        if dronecan is not None and bytes_from_bits is not None:
+            cmd_array = [0] * (self.esc_index + 1)
+            cmd_array[self.esc_index] = int_val
+            msg = dronecan.uavcan.equipment.esc.RawCommand(cmd=cmd_array)
+            payload = bytes(bytes_from_bits(msg._pack(tao=True)))
+        else:
+            # Canonical DSDL bit packing fallback
+            if self.esc_index == 1:
+                # 28 bits: cmd[0]=0 (14 bits), cmd[1]=int_val (14 bits)
+                b0 = 0
+                b1 = (int_val & 0x03) << 6
+                b2 = (int_val >> 2) & 0xFF
+                b3 = ((int_val >> 10) & 0x0F)
+                payload = bytes([b0, b1, b2, b3])
+            else:
+                b0 = int_val & 0xFF
+                b1 = ((int_val >> 8) & 0x3F) << 2
+                payload = bytes([b0, b1])
+
         tail = 0xC0 | (self._transfer_id & 0x1F)
         self._transfer_id = (self._transfer_id + 1) % 32
-        dronecan_data = bytes([b0, b1, tail])
+        dronecan_data = payload + bytes([tail])
+        dronecan_id = (20 << 24) | (1030 << 8) | 127
         self.send_can_frame(dronecan_id, dronecan_data, is_extended=True)
+
+    def set_raw_throttle(self, throttle: float, min_duty: float = 0.105, max_duty: float = 0.480,
+                         min_rpm: float = 1000.0, max_rpm: float = 6000.0) -> int:
+        """Maps throttle (0.0 to 1.0) to calibrated Duty Cycle for 1000 to 6000 Mech RPM.
+        
+        - 0% throttle: 0.0 duty (0 RPM, motor stopped).
+        - 1% throttle: min_duty (0.105 -> 1000 Mech RPM / 12,000 ERPM).
+        - 100% throttle: max_duty (0.480 -> 6000 Mech RPM / 72,000 ERPM).
+        Returns expected mechanical RPM.
+        """
+        if throttle < 0.01:
+            self.send_raw_command(0.0)
+            return 0
+        duty = throttle_to_duty(throttle, min_duty, max_duty)
+        self.send_raw_command(duty)
+        return throttle_to_mech_rpm(throttle, min_rpm, max_rpm)
 
     def stop(self) -> None:
         """Safely stops motor via CAN (sends zero RawCommand and zero RPM)."""

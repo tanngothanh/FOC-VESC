@@ -65,8 +65,10 @@ def main():
     parser = argparse.ArgumentParser(description="Configure VESC UAVCAN Throttle Mode")
     parser.add_argument("--port", default="COM33", help="VESC USB COM port (default: COM33)")
     parser.add_argument("--baud", type=int, default=115200, help="Baud rate (default: 115200)")
-    parser.add_argument("--mode", choices=["duty", "rpm", "current"], default="duty",
+    parser.add_argument("--mode", choices=["duty", "rpm", "current"], default=None,
                         help="Throttle mode: duty (2), rpm (3), current (0)")
+    parser.add_argument("--index", type=int, default=None,
+                        help="UAVCAN ESC Index (0 = Slider 1/Motor 1, 1 = Slider 2/Motor 2)")
     parser.add_argument("--read-only", action="store_true", help="Only read current mode without changing")
     args = parser.parse_args()
 
@@ -102,31 +104,39 @@ def main():
         print(f"  - Raw Mode: {curr_raw_mode} ({mode_name_map.get(curr_raw_mode, 'unknown')})")
         print(f"  - Raw RPM Max: {rpm_max:.1f} ERPM")
 
-        if args.read_only:
+        if args.read_only or (args.mode is None and args.index is None):
             return 0
 
-        target_mode = mode_map[args.mode]
-        if curr_raw_mode == target_mode:
-            print(f"\nVESC is already in mode '{args.mode}' (value {target_mode}). No change needed.")
-            return 0
-
-        print(f"\nUpdating UAVCAN Raw Mode from {curr_raw_mode} ({mode_name_map.get(curr_raw_mode, 'unknown')}) to {target_mode} ({args.mode})...")
-        appconf[25] = target_mode
-        set_appconf(ser, bytes(appconf))
-        time.sleep(0.3)
-
-        # Verify
-        new_app = get_appconf(ser)
-        if new_app and len(new_app) >= 26:
-            new_mode = new_app[25]
-            if new_mode == target_mode:
-                print(f"SUCCESS: UAVCAN Raw Mode successfully set to {new_mode} ({args.mode})!")
-                if target_mode == 2:
-                    print("--> Duty Cycle Control is now active. You can now use DroneCAN GUI ESC Management to smoothly control motor duty 0-100%!")
+        changed = False
+        if args.mode is not None:
+            target_mode = mode_map[args.mode]
+            if curr_raw_mode != target_mode:
+                print(f"\nUpdating UAVCAN Raw Mode from {curr_raw_mode} to {target_mode} ({args.mode})...")
+                appconf[25] = target_mode
+                changed = True
             else:
-                print(f"FAILED: Verification returned mode {new_mode}, expected {target_mode}")
-        else:
-            print("WARNING: Could not re-read APPCONF to verify.")
+                print(f"\nUAVCAN Raw Mode is already '{args.mode}'.")
+
+        if args.index is not None:
+            if curr_esc_idx != args.index:
+                print(f"Updating UAVCAN ESC Index from {curr_esc_idx} to {args.index} (Slider {args.index + 1})...")
+                appconf[24] = args.index
+                changed = True
+            else:
+                print(f"UAVCAN ESC Index is already {args.index}.")
+
+        if changed:
+            set_appconf(ser, bytes(appconf))
+            time.sleep(0.3)
+
+            # Verify
+            new_app = get_appconf(ser)
+            if new_app and len(new_app) >= 26:
+                print(f"\n=== VERIFIED ON VESC ===")
+                print(f"  - ESC Index: {new_app[24]} (corresponds to DroneCAN GUI Slider {new_app[24] + 1})")
+                print(f"  - Raw Mode:  {new_app[25]} ({mode_name_map.get(new_app[25], 'unknown')})")
+            else:
+                print("WARNING: Could not re-read APPCONF to verify.")
 
     finally:
         ser.close()
