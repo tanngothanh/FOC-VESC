@@ -157,4 +157,16 @@ class VESCMotorEngineerHarness:
             "appconf_xml": str(app_path)
         }
 
+    def get_universal_harness(self) -> Any:
+        """Returns unified UniversalPropulsionHarness instance sharing motor specifications."""
+        try:
+            from universal_harness import UniversalPropulsionHarness
+        except ImportError:
+            import sys
+            prop_dir = Path(__file__).resolve().parents[1]
+            if str(prop_dir) not in sys.path:
+                sys.path.insert(0, str(prop_dir))
+            from universal_harness import UniversalPropulsionHarness
+        return UniversalPropulsionHarness(pole_pairs=self.motor.pole_pairs)
+
 
